@@ -1,6 +1,6 @@
 using System;
 
-namespace CSharpFileManager
+namespace QuickFileManager
 {
     public class ConsoleLogger : ILogger
     {

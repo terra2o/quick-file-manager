@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace CSharpFileManager
+namespace QuickFileManager
 {
     public class FileSystemFileService : IFileService
     {

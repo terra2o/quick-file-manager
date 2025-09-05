@@ -1,4 +1,4 @@
-namespace CSharpFileManager
+namespace QuickFileManager
 {
     // Empty for now...
 }

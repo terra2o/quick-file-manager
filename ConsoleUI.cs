@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CSharpFileManager
+namespace QuickFileManager
 {
     public class ConsoleUI
     {
