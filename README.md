@@ -30,7 +30,7 @@ A lightweight, terminal-based file manager written in C#. Designed for developer
 Use `setup-qfm.sh` make it executable via `chmod +x setup-qfm.sh` if not executable.
 
 ### Run
-type `qfm` in terminal.
+enter `qfm` in terminal.
 
 ---
 
