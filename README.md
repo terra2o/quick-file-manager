@@ -16,7 +16,7 @@ A lightweight, terminal-based file manager written in C#. Designed for developer
 
 # Getting Started
 
-### Prerequisites
+### You need
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
 - Terminal
