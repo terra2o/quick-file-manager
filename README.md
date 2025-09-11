@@ -6,11 +6,10 @@ A lightweight, terminal-based file manager written in C#. Designed for developer
 
 # Features
 
-- **Create, read, append, delete, rename, and search files**
-- **List files in directories**
-- **Hotkeys** for fast actions (Ctrl+N, Ctrl+R, Ctrl+A, Ctrl+D, Ctrl+L, Ctrl+S, Ctrl+E)
+- **Hotkey** focused file manager. It's designed to be quick and efficient
 - Cross-platform console UI
 - Clean, modular C# codebase
+- Check the Hotkeys tab to see what you can do
 
 ---
 
@@ -36,17 +35,36 @@ enter `qfm` in terminal.
 
 ### Hotkeys
 
-Once the program is running, you can use the following Ctrl + Key combinations:
+Once the program is running, you can use the following key combinations:
 ```
 Hotkey	--> Action
-Ctrl+N	--> Create new file
-Ctrl+R	--> Read file
-Ctrl+A	--> Append to file
-Ctrl+D	--> Delete file
-Ctrl+L	--> List files in directory
-Ctrl+S	--> Search text inside file
-Ctrl+E	--> Exit
+    "CreateFile": "Ctrl+N",
+    "AppendFile": "Ctrl+A",
+    "DeleteFile": "Ctrl+E",
+    "ListFiles": "Ctrl+L",
+    "SearchFiles": "Ctrl+S",
+    "ReadFile": "Ctrl+R",
+    "Exit": "Ctrl+Q",
+    "BatchDelete": "Ctrl+Alt+D",
+    "BatchRename": "Ctrl+Alt+R",
+    "BatchMove": "Ctrl+Alt+M",
+    "QuickPreview": "Ctrl+P",
+    "MultiFileSearch": "Ctrl+Alt+F",
+    "FilterBySize": "Ctrl+Alt+S",
+    "FilterByDate": "Ctrl+Alt+D",
+    "OpenInEditor": "Ctrl+Alt+E",
+    "JumpToDefault": "Ctrl+G",
+    "AddBookmark": "Ctrl+B",
+    "CycleBookmarks": "Ctrl+Alt+B",
+    "FileInfo": "Ctrl+I",
+    "CopyFilePath": "Ctrl+C",
+    "PasteFile": "Ctrl+V",
+    "CreateFromTemplate": "Ctrl+T",
+    "AppendSnippet": "Ctrl+Alt+A",
+    "ChangeDirectory": "Ctrl+O",
+    "GoBackDirectory": "F1"
 ```
+You can change this via editing the config.json file.
 
 ---
 
