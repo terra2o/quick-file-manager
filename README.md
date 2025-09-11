@@ -72,3 +72,6 @@ You can change this via editing the config.json file.
 This is just a simple project. Contributions are totally welcome!  
 Feel free to fork the repo, tweak the code, fix bugs, or add features.  
 Pull requests are appreciated. Anything you want to try out is fine.
+
+### Warning
+This project is WIP. It is VERY buggy. Some things don't work. There are a lot of features I'm planning to add.
