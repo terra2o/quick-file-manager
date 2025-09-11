@@ -49,11 +49,11 @@ namespace QuickFileManager
             return File.Exists(path);
         }
 
-        public string[] GetFiles(string directory)
+        public string[] GetFiles(string directory, string searchPattern = "*")
         {
             if (string.IsNullOrEmpty(directory)) directory = Environment.CurrentDirectory;
             if (!Directory.Exists(directory)) throw new DirectoryNotFoundException(directory);
-            return Directory.GetFiles(directory);
+            return Directory.GetFiles(directory, searchPattern);
         }
 
         public void Move(string sourcePath, string destPath)
@@ -61,6 +61,26 @@ namespace QuickFileManager
             var destDir = Path.GetDirectoryName(destPath);
             if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir)) Directory.CreateDirectory(destDir);
             File.Move(sourcePath, destPath);
+        }
+
+        public void CopyFile(string sourcePath, string destPath)
+        {
+            var destDir = Path.GetDirectoryName(destPath);
+            if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir)) 
+                Directory.CreateDirectory(destDir);
+            File.Copy(sourcePath, destPath);
+        }
+
+        public FileInfo GetFileInfo(string path)
+        {
+            return new FileInfo(path);
+        }
+
+        public string[] GetDirectories(string directory)
+        {
+            if (string.IsNullOrEmpty(directory)) directory = Environment.CurrentDirectory;
+            if (!Directory.Exists(directory)) throw new DirectoryNotFoundException(directory);
+            return Directory.GetDirectories(directory);
         }
     }
 }

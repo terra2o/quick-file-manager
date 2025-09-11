@@ -1,0 +1,40 @@
+{
+  "hotkeys": {
+    "CreateFile": "Ctrl+N",
+    "AppendFile": "Ctrl+A",
+    "DeleteFile": "Ctrl+E",
+    "ListFiles": "Ctrl+L",
+    "SearchFiles": "Ctrl+S",
+    "ReadFile": "Ctrl+R",
+    "Exit": "Ctrl+Q",
+    "BatchDelete": "Ctrl+Alt+D",
+    "BatchRename": "Ctrl+Alt+R",
+    "BatchMove": "Ctrl+Alt+M",
+    "QuickPreview": "Ctrl+P",
+    "MultiFileSearch": "Ctrl+Alt+F",
+    "FilterBySize": "Ctrl+Alt+S",
+    "FilterByDate": "Ctrl+Alt+D",
+    "OpenInEditor": "Ctrl+Alt+E",
+    "JumpToDefault": "Ctrl+G",
+    "AddBookmark": "Ctrl+B",
+    "CycleBookmarks": "Ctrl+Alt+B",
+    "FileInfo": "Ctrl+I",
+    "CopyFilePath": "Ctrl+C",
+    "PasteFile": "Ctrl+V",
+    "CreateFromTemplate": "Ctrl+T",
+    "AppendSnippet": "Ctrl+Alt+A",
+    "ChangeDirectory": "Ctrl+O",
+    "GoBackDirectory": "F1"
+  },
+  "defaultDirectory": "~/Documents",
+  "editor": "nano",
+  "bookmarks": [],
+  "templates": {
+    "python": "#!/usr/bin/env python3\n\ndef main():\n    print(\"Hello, World!\")\n\nif __name__ == \"__main__\":\n    main()",
+    "html": "<!DOCTYPE html>\n<html>\n<head>\n    <title>New Page</title>\n</head>\n<body>\n    <h1>Hello, World!</h1>\n</body>\n</html>"
+  },
+  "snippets": {
+    "timestamp": "// Created: {0}\n",
+    "license": "// MIT License\n// Copyright (c) {0}"
+  }
+}

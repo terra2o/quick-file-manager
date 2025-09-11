@@ -2,15 +2,21 @@ using System;
 
 namespace QuickFileManager
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            ILogger logger = new ConsoleLogger();
-            IFileService fileService = new FileSystemFileService(logger);
-            var manager = new FileManager(fileService, logger);
+            var logger = new ConsoleLogger();
+            var config = ConfigLoader.Load();
 
-            var ui = new ConsoleUI(manager, logger);
+            logger.Info($"Loaded {config.Hotkeys?.Count} hotkeys");
+            logger.Info($"Default directory: {config.DefaultDirectory}");
+    
+            var fileService = new FileSystemFileService(logger);
+            var manager = new FileManager(fileService, logger, config);
+
+            // Pass config to UI
+            var ui = new ConsoleUI(manager, logger, config);
             ui.RunWithHotkeys();
         }
     }
