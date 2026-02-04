@@ -361,12 +361,14 @@ namespace QuickFileManager
             switch (keyInfo.Key)
             {
                 case ConsoleKey.UpArrow:
+                case ConsoleKey.K:
                     if (_entries.Count == 0) return true;
                     _selectedIndex = Math.Max(0, _selectedIndex - 1);
                     EnsureSelectionInRange(viewHeight);
                     DrawDirectoryPane(Environment.CurrentDirectory);
                     return true;
                 case ConsoleKey.DownArrow:
+                case ConsoleKey.J:
                     if (_entries.Count == 0) return true;
                     _selectedIndex = Math.Min(_entries.Count - 1, _selectedIndex + 1);
                     EnsureSelectionInRange(viewHeight);
