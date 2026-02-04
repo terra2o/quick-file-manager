@@ -1,6 +1,10 @@
 # Quick File Manager (QFM) 📚📃
 
-A lightweight, terminal-based file manager written in C#. Designed for developers and power users who want quick file operations without leaving the console. Works across Windows, Linux, macOS, and BSD (with .NET 9 SDK installed).
+A lightweight, terminal-based file manager written in C#. Designed for developers and power users who want quick file operations without leaving the console. Works across Windows, Linux, macOS.
+
+<p align="center">
+	<img src="assets/qfm.png" width="822">
+</p>
 
 ---
 
@@ -23,13 +27,22 @@ A lightweight, terminal-based file manager written in C#. Designed for developer
 
 ---
 
-# Build & Run
+# Build
 
 ### Build
+## Linux
 Use `setup-qfm.sh` make it executable via `chmod +x setup-qfm.sh` if not executable.
+Note: Review the script. If you're not using bash, you'll have to change some things.
 
-### Run
-enter `qfm` in terminal.
+If you don't want to use the script:
+```
+dotnet publish QuickFileManager.csproj -c Release -r linux-x64 --self-contained true
+```
+
+## Windows
+```
+dotnet publish QuickFileManager.csproj -c Release --self-contained true 
+```
 
 ---
 
