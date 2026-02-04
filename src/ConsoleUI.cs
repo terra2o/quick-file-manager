@@ -18,9 +18,11 @@ namespace QuickFileManager
         // Layout
         private int _totalWidth;
         private int _totalHeight;
-        private int _rightWidth;
-        private int _leftWidth;
-        private int _dividerX;
+        private int _hotkeyWidth;   // Left pane
+        private int _logWidth;      // Middle pane
+        private int _fileWidth;     // Right pane
+        private int _divider1X;     // Between Hotkeys and Logs
+        private int _divider2X;     // Between Logs and Files
 
         // Left pane buffer
         private readonly List<string> _leftBuffer = new();
@@ -50,54 +52,63 @@ namespace QuickFileManager
 
         private void UpdateLayout()
         {
-            _totalWidth = Math.Max(40, Console.WindowWidth);
+            _totalWidth = Math.Max(60, Console.WindowWidth);
             _totalHeight = Math.Max(10, Console.WindowHeight);
 
-            int proposedRight = Math.Max(20, (int)(_totalWidth * 0.28));
-            proposedRight = Math.Min(proposedRight, _totalWidth - 20);
+            // Calculate widths: 20% Hotkeys, 40% Logs, 40% Files (approx)
+            _hotkeyWidth = (int)(_totalWidth * 0.20);
+            _fileWidth = (int)(_totalWidth * 0.35);
+            _logWidth = _totalWidth - _hotkeyWidth - _fileWidth - 2; // -2 for the two dividers
 
-            _rightWidth = proposedRight;
-            _dividerX = _totalWidth - _rightWidth - 1;
-            _leftWidth = _dividerX;
+            _divider1X = _hotkeyWidth;
+            _divider2X = _divider1X + _logWidth + 1;
         }
 
-        private void DrawDivider()
+        private void DrawDividers()
         {
-            var bar = "│"; // fallback to "|" if font can't render
+            var bar = "│";
             for (int y = 0; y < _totalHeight; y++)
-                SafeWriteAt(_dividerX, y, bar);
+            {
+                SafeWriteAt(_divider1X, y, bar);
+                SafeWriteAt(_divider2X, y, bar);
+            }
         }
 
-        private void RenderLeftPane()
+        private void RenderPanes()
         {
             UpdateLayout();
+            Console.Clear(); // Clear once at the start of a full render
+            DrawDividers();
 
-            var header = BuildHeaderLines().ToList();
-            int headerHeight = header.Count;
-            int availableForBuffer = Math.Max(0, _totalHeight - headerHeight - 1); // reserve last line for prompt
+            RenderHotkeyPane();
+            RenderLogPane();
+            DrawDirectoryPane(Environment.CurrentDirectory);
+        }
+
+        private void RenderHotkeyPane()
+        {
+            var lines = BuildHeaderLines().ToList();
+            for (int i = 0; i < lines.Count && i < _totalHeight; i++)
+            {
+                SafeWriteAt(0, i, PadAndTrunc(lines[i], _hotkeyWidth));
+            }
+        }
+
+        private void RenderLogPane()
+        {
+            int startX = _divider1X + 1;
+            int availableHeight = _totalHeight - 1; // reserve last line for prompt
 
             if (_leftBuffer.Count > LeftBufferMaxLines)
                 _leftBuffer.RemoveRange(0, _leftBuffer.Count - LeftBufferMaxLines);
 
-            var bufferToShow = _leftBuffer.Skip(Math.Max(0, _leftBuffer.Count - availableForBuffer)).ToList();
+            var bufferToShow = _leftBuffer.Skip(Math.Max(0, _leftBuffer.Count - availableHeight)).ToList();
 
-            // Clear left pane area
-            for (int y = 0; y < _totalHeight; y++)
-                SafeWriteAt(0, y, new string(' ', _leftWidth));
-
-            // Draw header
-            for (int i = 0; i < headerHeight && i < _totalHeight; i++)
-                SafeWriteAt(0, i, PadAndTrunc(header[i], _leftWidth));
-
-            // Draw buffer lines under header
-            for (int i = 0; i < bufferToShow.Count && headerHeight + i < _totalHeight - 1; i++)
-                SafeWriteAt(0, headerHeight + i, PadAndTrunc(bufferToShow[i], _leftWidth));
-
-            // Divider + right pane
-            DrawDivider();
-            DrawDirectoryPane(Environment.CurrentDirectory);
+            for (int i = 0; i < bufferToShow.Count && i < availableHeight; i++)
+            {
+                SafeWriteAt(startX, i, PadAndTrunc(bufferToShow[i], _logWidth));
+            }
         }
-
         private IEnumerable<string> BuildHeaderLines()
         {
             yield return "=== Quick File Manager ===";
@@ -116,39 +127,42 @@ namespace QuickFileManager
 
         private void DrawDirectoryPane(string directory)
         {
-            UpdateLayout();
-            DrawDivider();
-
             try { _entries = Directory.GetFileSystemEntries(directory).ToList(); }
-            catch (Exception ex) { _entries = new List<string> { $"Error: {ex.Message}" }; }
+            catch { _entries = new List<string> { "Access Denied" }; }
 
-            int startX = _dividerX + 1;
-            int headerY = 0;
-            int viewTop = 1; // reserve first line for header
-            int viewHeight = Math.Max(0, _totalHeight - viewTop);
+            int startX = _divider2X + 1;
+            int viewHeight = _totalHeight - 1; // reserve top line for "Dir:" header
 
-            // Clear right pane
-            for (int y = 0; y < _totalHeight; y++)
-                SafeWriteAt(startX, y, new string(' ', _rightWidth));
+            // Header
+            SafeWriteAt(startX, 0, PadAndTrunc($"Dir: {Path.GetFileName(directory)}", _fileWidth));
 
-            // Header (no newline here)
-            SafeWriteAt(startX, headerY, PadAndTrunc($"Dir: {directory}", _rightWidth));
-
-            // Ensure selection/scroll are valid
             EnsureSelectionInRange(viewHeight);
 
-            // Draw ONLY the selection-aware list (don’t draw twice)
             for (int i = 0; i < viewHeight; i++)
             {
                 int idx = _scrollOffset + i;
                 string line = idx < _entries.Count ? GetDisplayFor(_entries[idx]) : "";
-                int y = viewTop + i;
+                int y = i + 1;
 
                 if (idx == _selectedIndex)
-                    WriteRightHighlighted(startX, y, PadAndTrunc(line, _rightWidth));
+                    WriteRightHighlighted(startX, y, PadAndTrunc(line, _fileWidth));
                 else
-                    SafeWriteAt(startX, y, PadAndTrunc(line, _rightWidth));
+                    SafeWriteAt(startX, y, PadAndTrunc(line, _fileWidth));
             }
+        }
+
+        private void UpdateSelection(int oldIndex, int newIndex)
+        {
+            int startX = _divider2X + 1;
+            int viewTop = 1;
+
+            int oldY = viewTop + (oldIndex - _scrollOffset);
+            if (oldY >= viewTop && oldY < _totalHeight)
+                SafeWriteAt(startX, oldY, PadAndTrunc(GetDisplayFor(_entries[oldIndex]), _fileWidth));
+
+            int newY = viewTop + (newIndex - _scrollOffset);
+            if (newY >= viewTop && newY < _totalHeight)
+                WriteRightHighlighted(startX, newY, PadAndTrunc(GetDisplayFor(_entries[newIndex]), _fileWidth));
         }
 
         private string GetDisplayFor(string fullPath)
@@ -215,21 +229,83 @@ namespace QuickFileManager
         {
             UpdateLayout();
             int promptY = _totalHeight - 1;
-            string full = promptText.EndsWith(" ") ? promptText : promptText + " ";
-            SafeWriteAt(0, promptY, new string(' ', _leftWidth));
-            SafeWriteAt(0, promptY, Truncate(full, _leftWidth - 1));
-            try { Console.SetCursorPosition(Math.Min(full.Length, Math.Max(0, _leftWidth - 1)), promptY); } catch { }
+            int startX = _divider1X + 1;
+            string fullPrompt = promptText.EndsWith(" ") ? promptText : promptText + " ";
+            
+            SafeWriteAt(startX, promptY, new string(' ', _logWidth));
+            SafeWriteAt(startX, promptY, Truncate(fullPrompt, _logWidth - 1));
+
+            int cursorStart = startX + Math.Min(fullPrompt.Length, _logWidth - 1);
+            Console.SetCursorPosition(cursorStart, promptY);
+            Console.CursorVisible = true;
+
             string input = Console.ReadLine() ?? "";
-            AddLeft($"> {full}{input}");
+            
+            Console.CursorVisible = false;
+            AddLeft($"> {fullPrompt}{input}");
+            bool entering = true;
+
+            while (entering)
+            {
+                // Check if window resized while waiting for input
+                if (Console.WindowWidth != _totalWidth || Console.WindowHeight != _totalHeight)
+                {
+                    RenderHotkeyPane(); 
+                    // Reset cursor after re-render
+                    Console.SetCursorPosition(cursorStart + input.Length, promptY);
+                }
+
+                if (!Console.KeyAvailable) continue;
+
+                var key = Console.ReadKey(intercept: true);
+
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    entering = false;
+                }
+                else if (key.Key == ConsoleKey.Escape)
+                {
+                    input = string.Empty; // Cancel input
+                    entering = false;
+                }
+                else if (key.Key == ConsoleKey.Backspace)
+                {
+                    if (input.Length > 0)
+                    {
+                        input = input.Substring(0, input.Length - 1);
+                        // Visual backspace: move back, write space, move back
+                        Console.SetCursorPosition(cursorStart + input.Length, promptY);
+                        Console.Write(" ");
+                        Console.SetCursorPosition(cursorStart + input.Length, promptY);
+                    }
+                }
+                else if (!char.IsControl(key.KeyChar))
+                {
+                    // Limit input length to prevent overflowing the pane
+                    if (cursorStart + input.Length < _hotkeyWidth - 1)
+                    {
+                        input += key.KeyChar;
+                        Console.Write(key.KeyChar);
+                    }
+                }
+            }
+
+            Console.CursorVisible = false;
+            
+            // Log the interaction to the left buffer
+            if (!string.IsNullOrEmpty(input))
+                AddLeft($"> {fullPrompt}{input}");
+
             return input.Trim();
         }
 
         private void AddLeft(string text)
         {
-            if (text == null) text = "";
+            if (string.IsNullOrEmpty(text)) return;
             foreach (var line in text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
                 _leftBuffer.Add(line);
-            RenderLeftPane();
+            
+            RenderPanes(); // Full refresh to keep all 3 panes in sync
         }
 
         // ---------- Hotkeys & normalization ----------
@@ -317,8 +393,7 @@ namespace QuickFileManager
         public void RunWithHotkeys()
         {
             _exitRequested = false;
-            RenderLeftPane();
-            DrawDirectoryPane(Environment.CurrentDirectory);
+            RenderPanes();
 
             int prevW = Console.WindowWidth;
             int prevH = Console.WindowHeight;
@@ -329,9 +404,7 @@ namespace QuickFileManager
                 {
                     prevW = Console.WindowWidth;
                     prevH = Console.WindowHeight;
-                    UpdateLayout();
-                    RenderLeftPane();
-                    DrawDirectoryPane(Environment.CurrentDirectory);
+                    RenderPanes();
                 }
 
                 var keyInfo = Console.ReadKey(intercept: true);
@@ -358,42 +431,44 @@ namespace QuickFileManager
         private bool HandleNavigationKey(ConsoleKeyInfo keyInfo)
         {
             int viewHeight = Math.Max(0, _totalHeight - 1);
+            
+            int oldIndex = _selectedIndex;
+            int oldOffset = _scrollOffset;
+
             switch (keyInfo.Key)
             {
                 case ConsoleKey.UpArrow:
                 case ConsoleKey.K:
                     if (_entries.Count == 0) return true;
                     _selectedIndex = Math.Max(0, _selectedIndex - 1);
-                    EnsureSelectionInRange(viewHeight);
-                    DrawDirectoryPane(Environment.CurrentDirectory);
-                    return true;
+                    break;
+
                 case ConsoleKey.DownArrow:
                 case ConsoleKey.J:
                     if (_entries.Count == 0) return true;
                     _selectedIndex = Math.Min(_entries.Count - 1, _selectedIndex + 1);
-                    EnsureSelectionInRange(viewHeight);
-                    DrawDirectoryPane(Environment.CurrentDirectory);
-                    return true;
+                    break;
+
                 case ConsoleKey.PageUp:
+                    if (_entries.Count == 0) return true;
                     _selectedIndex = Math.Max(0, _selectedIndex - (viewHeight - 1));
-                    EnsureSelectionInRange(viewHeight);
-                    DrawDirectoryPane(Environment.CurrentDirectory);
-                    return true;
+                    break;
+
                 case ConsoleKey.PageDown:
+                    if (_entries.Count == 0) return true;
                     _selectedIndex = Math.Min(Math.Max(0, _entries.Count - 1), _selectedIndex + (viewHeight - 1));
-                    EnsureSelectionInRange(viewHeight);
-                    DrawDirectoryPane(Environment.CurrentDirectory);
-                    return true;
+                    break;
+
                 case ConsoleKey.Home:
+                    if (_entries.Count == 0) return true;
                     _selectedIndex = 0;
-                    _scrollOffset = 0;
-                    DrawDirectoryPane(Environment.CurrentDirectory);
-                    return true;
+                    break;
+
                 case ConsoleKey.End:
+                    if (_entries.Count == 0) return true;
                     _selectedIndex = Math.Max(0, _entries.Count - 1);
-                    EnsureSelectionInRange(viewHeight);
-                    DrawDirectoryPane(Environment.CurrentDirectory);
-                    return true;
+                    break;
+
                 case ConsoleKey.Enter:
                     if (_entries.Count == 0) return true;
                     var target = _entries[_selectedIndex];
@@ -420,9 +495,23 @@ namespace QuickFileManager
                         DrawDirectoryPane(Environment.CurrentDirectory);
                     }
                     return true;
+
                 default:
                     return false;
             }
+
+            EnsureSelectionInRange(viewHeight);
+
+            if (_scrollOffset != oldOffset)
+            {
+                DrawDirectoryPane(Environment.CurrentDirectory);
+            }
+            else if (_selectedIndex != oldIndex)
+            {
+                UpdateSelection(oldIndex, _selectedIndex);
+            }
+
+            return true;
         }
 
         // ---------- File operation methods (use AddLeft/Prompt) ----------
@@ -626,17 +715,54 @@ namespace QuickFileManager
 
         private void ShowFileInfo()
         {
-            var p = Prompt("Enter file path:");
-            if (string.IsNullOrEmpty(p)) { AddLeft("Empty."); return; }
-            p = ExpandPath(p);
+            // 1. Ask for input
+            var p = Prompt("Enter file path (leave empty for selected):");
+            string targetPath;
+
+            if (!string.IsNullOrWhiteSpace(p))
+            {
+                // Use user input
+                targetPath = ExpandPath(p);
+            }
+            else if (_entries.Count > 0 && _selectedIndex >= 0 && _selectedIndex < _entries.Count)
+            {
+                // Fallback: Use the item selected in the UI list
+                targetPath = _entries[_selectedIndex];
+                AddLeft($"Inspecting selected: {Path.GetFileName(targetPath)}");
+            }
+            else
+            {
+                AddLeft("Nothing selected and no path provided.");
+                return;
+            }
+
             try
             {
-                var info = _manager.GetFileInfo(p);
-                AddLeft($"Name: {info.Name}");
-                AddLeft($"Size: {info.Length}");
-                AddLeft($"Modified: {info.LastWriteTime}");
+                // 2. Get info via manager
+                var info = _manager.GetFileInfo(targetPath);
+                
+                // 3. Display details
+                AddLeft($"--- Info: {info.Name} ---");
+                
+                // Check if it's a directory or file for better formatting
+                if (Directory.Exists(targetPath))
+                {
+                    AddLeft("Type: Directory");
+                    // Note: FileInfo.Length throws for directories; handle accordingly
+                    AddLeft($"Modified: {info.LastWriteTime}");
+                }
+                else
+                {
+                    AddLeft("Type: File");
+                    AddLeft($"Size: {info.Length} bytes");
+                    AddLeft($"Modified: {info.LastWriteTime}");
+                    AddLeft($"Extension: {info.Extension}");
+                }
             }
-            catch (Exception ex) { AddLeft($"Info failed: {ex.Message}"); }
+            catch (Exception ex) 
+            { 
+                AddLeft($"Info failed: {ex.Message}"); 
+            }
         }
 
         private void CopyFilePath()
